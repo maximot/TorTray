@@ -27,7 +27,7 @@ void Tray::init() {
 
 	// Display tray icon
 	if (!Shell_NotifyIcon(NIM_ADD, &structNID)) {
-		PostQuitMessage(0);
+		DestroyWindow(dummyWin);
 	}
 	Shell_NotifyIcon(NIM_SETVERSION, &structNID);
 
