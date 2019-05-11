@@ -19,5 +19,9 @@ void initApp(_In_ HINSTANCE hInstance,
 int mainLoop();
 
 void processTrayMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+void processHotkey(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
 
 void switchTor();
+
+void setupHotkey(HWND hwnd);

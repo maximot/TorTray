@@ -14,6 +14,10 @@
 #define IDI_TORTRAYICON_OFF     108
 #define IDC_TORTRAY       		2
 
+#define HK_SWITCH               0x54 // T char
+#define HK_QUIT                 0x51 // Q char
+
+
 #define	WM_USER_SHELLICON       WM_USER + 1
 
 #ifndef IDC_STATIC

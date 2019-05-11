@@ -68,9 +68,24 @@ void initApp(_In_ HINSTANCE hInstance,
 		(TIMERPROC)NULL);
 
 	tray = new Tray(hWnd, hInstance);
+	setupHotkey(hWnd);
 
 }
 
+void setupHotkey(HWND hwnd) {
+	RegisterHotKey(
+		hwnd,
+		1337,
+		MOD_CONTROL|MOD_ALT,
+		HK_SWITCH
+	);
+	RegisterHotKey(
+		hwnd,
+		1338,
+		MOD_CONTROL | MOD_ALT,
+		HK_QUIT
+	);
+}
 
 
 //
@@ -136,6 +151,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_USER_SHELLICON:
 		processTrayMessage(hWnd, message, wParam, lParam);
 		break;
+	case WM_HOTKEY:
+		processHotkey(hWnd, message, wParam, lParam);
+		break;
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
@@ -198,6 +216,18 @@ void processTrayMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	case WM_LBUTTONDOWN:
 		switchTor();
 	break;
+	}
+}
+
+void processHotkey(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	if (LOWORD(lParam) == MOD_ALT | MOD_CONTROL) {
+		switch (HIWORD(lParam)) {
+		case HK_SWITCH:
+			switchTor();
+			break;
+		case HK_QUIT:
+			DestroyWindow(hWnd);
+		}
 	}
 }
 
