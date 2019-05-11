@@ -171,6 +171,7 @@ void processTrayMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	case WM_RBUTTONDOWN:
 	{
 		HMENU hMenu;
+		HMENU hSub;
 		// get mouse cursor position x and y as lParam has the Message itself
 		GetCursorPos(&lpClickPoint);
 
@@ -179,9 +180,15 @@ void processTrayMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 		if (!hMenu)
 			return;
 
+		hSub = GetSubMenu(hMenu, 0);
+		
+		if (!hSub) 
+			return;
+
+
 		// Display menu
 		SetForegroundWindow(hWnd);
-		TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_BOTTOMALIGN, lpClickPoint.x, lpClickPoint.y, 0, hWnd, NULL);
+		TrackPopupMenu(hSub, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_BOTTOMALIGN, lpClickPoint.x, lpClickPoint.y, 0, hWnd, NULL);
 		SendMessage(hWnd, WM_NULL, 0, 0);
 
 		// Kill off objects we're done with
