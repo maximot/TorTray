@@ -4,18 +4,16 @@
 #include "stdafx.h"
 #include "TorTray.h"
 
-#define MAX_LOADSTRING 100
+#define MAX_LOADSTRING 255
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 
-// Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+Tray* tray;
+
+
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -25,60 +23,78 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // TODO: Place code here.
+	initApp(hInstance, nCmdShow);
 
-    // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_TORTRAY, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
+	return mainLoop();
 
-    // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
-    {
-        return FALSE;
-    }
+}
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TORTRAY));
+int mainLoop() {
+	// Main message loop:
+	MSG msg;
+	while (GetMessage(&msg, nullptr, 0, 0))
+	{
+		DWORD torPid = getPIDbyName(L"tor.exe");
+		if (torPid) {
+			tray->updateIcon(TRUE);
+		} else {
+			tray->updateIcon(FALSE);
+		}
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+	delete tray;
+	return (int)msg.wParam;
+}
 
-    MSG msg;
+void initApp(_In_ HINSTANCE hInstance,
+			 _In_ int       nCmdShow) 
+{
+	// Initialize global strings
+	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+	LoadStringW(hInstance, IDC_TORTRAY, szWindowClass, MAX_LOADSTRING);
+	DummyWindow(hInstance);
 
-    // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
+	// Perform application initialization:
+	HWND hWnd = InitInstance(hInstance, nCmdShow);
 
-    return (int) msg.wParam;
+	if(hWnd == 0) {
+		exit(0);
+	}
+
+	SetTimer(hWnd,             // handle to main window 
+		0,            // timer identifier 
+		1000,                 
+		(TIMERPROC)NULL);
+
+	tray = new Tray(hWnd, hInstance);
+
 }
 
 
 
 //
-//  FUNCTION: MyRegisterClass()
+//  FUNCTION: DummyWindow()
 //
 //  PURPOSE: Registers the window class.
 //
-ATOM MyRegisterClass(HINSTANCE hInstance)
+ATOM DummyWindow(HINSTANCE hInstance)
 {
     WNDCLASSEXW wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.style          = CS_HREDRAW | CS_VREDRAW; 
     wcex.lpfnWndProc    = WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TORTRAY));
+    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TORTRAYICON_ON));
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_TORTRAY);
+    wcex.hbrBackground  = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	wcex.lpszMenuName   = 0;
     wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_TORTRAYICON_ON));
 
     return RegisterClassExW(&wcex);
 }
@@ -93,22 +109,14 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+HWND InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, hInstance, nullptr);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
+   return hWnd;
 }
 
 //
@@ -125,6 +133,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+	case WM_USER_SHELLICON:
+		processTrayMessage(hWnd, message, wParam, lParam);
+		break;
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
@@ -142,14 +153,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-            EndPaint(hWnd, &ps);
-        }
-        break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -159,6 +162,46 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+void processTrayMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+
+	POINT lpClickPoint;
+
+	switch (LOWORD(lParam))
+	{
+	case WM_RBUTTONDOWN:
+	{
+		HMENU hMenu;
+		// get mouse cursor position x and y as lParam has the Message itself
+		GetCursorPos(&lpClickPoint);
+
+		// Load menu resource
+		hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDC_TORTRAY));
+		if (!hMenu)
+			return;
+
+		// Display menu
+		SetForegroundWindow(hWnd);
+		TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_BOTTOMALIGN, lpClickPoint.x, lpClickPoint.y, 0, hWnd, NULL);
+		SendMessage(hWnd, WM_NULL, 0, 0);
+
+		// Kill off objects we're done with
+		DestroyMenu(hMenu);
+		break;
+	}
+	case WM_LBUTTONDOWN:
+		switchTor();
+	break;
+	}
+}
+
+void switchTor() {
+	DWORD torPid = getPIDbyName(L"tor.exe");
+	if (torPid) {
+		killProcess(torPid);
+	} else {
+		startProcess(L"tor.exe");
+	}
+}
 // Message handler for about box.
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

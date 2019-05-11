@@ -30,12 +30,24 @@
     <ClInclude Include="TorTray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Tray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="processHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TorTray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="processHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -45,10 +57,10 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="small.ico">
+    <Image Include="TorTrayIcon_Off.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="TorTray.ico">
+    <Image Include="TorTrayIcon_On.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
