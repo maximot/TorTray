@@ -9,9 +9,12 @@ DWORD getPIDbyName(PWCHAR name) {
 
 	if (Process32First(snapshot, &entry))
 		while (Process32Next(snapshot, &entry))
-			if (!wcscmp(entry.szExeFile, name))
+			if (!wcscmp(entry.szExeFile, name)) {
+				CloseHandle(snapshot);
 				return entry.th32ProcessID;
-
+			}
+	
+	CloseHandle(snapshot);
 	return 0;
 }
 
@@ -30,6 +33,7 @@ void killProcess(DWORD pid) {
 	HANDLE explorer;
 	explorer = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
 	TerminateProcess(explorer,0);
+	CloseHandle(explorer);
 }
 
 void killProcess(PWCHAR name) {
