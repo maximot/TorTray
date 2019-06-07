@@ -50,9 +50,16 @@ int mainLoop() {
 void initApp(_In_ HINSTANCE hInstance,
 			 _In_ int       nCmdShow) 
 {
+
 	// Initialize global strings
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadStringW(hInstance, IDC_TORTRAY, szWindowClass, MAX_LOADSTRING);
+
+	if (checkIfRunning(hInstance, szWindowClass)) {
+		MessageBox(0, L"TorTray is already running!", 0, 0);
+		exit(0);
+	}		
+	
 	DummyWindow(hInstance);
 
 	// Perform application initialization:

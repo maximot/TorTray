@@ -1,6 +1,13 @@
 #include "stdafx.h"
 #include "processHelper.h"
 
+
+BOOL checkIfRunning(HINSTANCE hInstance, WCHAR* windowClassName) {
+	HWND hWndTargetWindow = FindWindow(windowClassName, 0);
+
+	return hWndTargetWindow != 0;	
+}
+
 DWORD getPIDbyName(PWCHAR name) {
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(PROCESSENTRY32);
